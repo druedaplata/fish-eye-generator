@@ -1,6 +1,6 @@
 from __future__ import division
 from flask import Flask, render_template, request
-from math import *
+import math
 import sys
 import time
 from scipy import misc
@@ -28,29 +28,57 @@ def fish():
 
 # read temporal image
   img = plt.imread('static/normal.jpg')
-  imgh, imgw, bits = img.shape
-  wh = int(imgw / 2)
-  hh = int(imgh / 2)
 
-  img2 = img.copy()
-  img2[0:imgh] = (0,0,0)
+  img_flat = img.flatten()
 
-  def getcentre( p ): return (p[0] - wh, p[1] - hh)
-  def decentre ( p ): return (int( p[0] + wh ), int( p[1] + hh ))
-  def polar    ( p ): return (sqrt( p[0]**2 + p[1]**2 ), atan2( p[1], p[0] ))
-  def cartesian( p ): return (p[0] * cos( p[1] ), p[0] * sin( p[1] ))
-  def normalize( p ): return (radians( hfov ) * (p[0]/wh), radians( hfov ) * (p[1]/wh))
-  def spaceout ( p ): return ((p[0] * wh) / radians( hfov ), (p[1] * wh) / radians( hfov ))
-  fov = 180
-  hfov = fov / 2
-  scale      = 1.0 - ((fov - 90) / 340) ** 1.5 if fov > 90 else 1.0
-  for y in range(imgh):
-    for x in range(imgw):
-      p = polar( normalize( getcentre( (x, y) ) ) )
-      p = (tan( 2*atan( p[0]/2 ) ) * scale, p[1])
-      p = decentre( spaceout( cartesian( p ) ) )
-      if p[1] >= 0 and p[1] < imgh and p[0] > 0 and p[0] < imgw:
-        img2[y,x] = img[p[1],p[0]]
+  # Create copies of the flatten image to work with them
+  bcap = img_flat.copy()
+  bfish = img_flat.copy()
+
+  # Get data from original image
+  width, height, c = img.shape
+  fov = 120
+
+  i = 0
+  w,h,c = img.shape
+  print bfish.shape
+  while(i < bfish.size):
+
+    x = (i/3)%w - w/2
+    y = int((i/3)/w - h/2)
+    r = math.sqrt(pow(x,2)+pow(y,2))
+    el = math.pi/2 * (1 - r / (h / 2))
+
+    theta = math.atan2(y, x)
+
+    f = (width/2) / math.tan( fov / 2 * math.pi / 180 )
+
+    r2 = f * math.tan( math.pi / 2 - el)
+    x2 = math.floor(r2 * math.cos(theta) + w/2)
+    y2 = math.floor(r2 * math.sin(theta) + h/2)
+
+    i2 = (int)(3 * (x2 + y2 * w))
+
+    evalu = ((r2 < 0) or (r2 >= (w/2)))
+    if (evalu):
+      bfish[i] = 0
+      i+=1
+      bfish[i] = 0
+      i+=1
+      bfish[i] = 0
+      i+=1
+    else:
+      bfish[i] = bcap[i2]
+      i+=1
+      i2+=1
+      bfish[i] = bcap[i2]
+      i+=1
+      i2+=1
+      bfish[i] = bcap[i2]
+      i+=1
+      i2+=1
+
+  img2 = np.reshape(bfish, (600,600,3))
 
   name = next(tempfile._get_candidate_names())
 

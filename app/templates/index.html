@@ -78,10 +78,12 @@
         function getFishEye(myLatLong){
             var lat = myLatLong.lat();
             var long = myLatLong.lng();
+            console.log(lat);
+            console.log(long);
             var key = "&key=AIzaSyC-ajGOO9QlAAlH_pOhywj0q6hdFpkI0Ks";
             var fov = "&fov=180";
             var pitch = "&pitch=90";
-            var size = "?size=400x400";
+            var size = "?size=600x600";
             var loc = "&location=" + lat + "," + long;
             var base = "https://maps.googleapis.com/maps/api/streetview";
 
