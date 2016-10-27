@@ -43,7 +43,7 @@
 
 
     <script>
-    var myLatLong = {lat: 40.71121, lng: -74.01497};
+    var myLatLong = {lat: 51.51381379, lng: -0.07685065};
     function initMap() {
 
         var mapOptions = {
@@ -60,6 +60,7 @@
         });
 
         marker.addListener('dragend', handleDrag);
+        getFishEye(myLatLong);
 
         };
     </script>
