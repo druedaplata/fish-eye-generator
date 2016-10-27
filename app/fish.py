@@ -1,5 +1,5 @@
 from __future__ import division
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import math
 import sys
 import time
@@ -15,8 +15,8 @@ def index():
   return render_template('index.html')
 
 
-@app.route('/fish', methods=['GET','POST'])
-def fish():
+@app.route('/transform', methods=['GET','POST'])
+def transform():
   key = request.json['key']
   fov = request.json['fov']
   pitch = request.json['pitch']
@@ -29,29 +29,45 @@ def fish():
 # read temporal image
   img = plt.imread('static/normal.jpg')
 
+  output = {}
+  output['equidistant'] = get_image(img)
+  output['ortho'] = get_image(img, True)
+
+  return jsonify(**output)
+
+
+def get_image(img, ortho=False):
+
+  # get data from image
+  w,h,c = img.shape
+
+  # flatten image
   img_flat = img.flatten()
+  fov = 120
 
   # Create copies of the flatten image to work with them
   bcap = img_flat.copy()
-  bfish = img_flat.copy()
-
-  # Get data from original image
-  width, height, c = img.shape
-  fov = 120
+  output = img_flat.copy()
 
   i = 0
   w,h,c = img.shape
-  print bfish.shape
-  while(i < bfish.size):
+  while(i < output.size):
 
     x = (i/3)%w - w/2
     y = int((i/3)/w - h/2)
     r = math.sqrt(pow(x,2)+pow(y,2))
-    el = math.pi/2 * (1 - r / (h / 2))
+
+    if (ortho):
+      try:
+        el = math.acos(r / ( h / 2))
+      except:
+        el = 0
+    else:
+      el = math.pi/2 * (1 - r / (h / 2))
 
     theta = math.atan2(y, x)
 
-    f = (width/2) / math.tan( fov / 2 * math.pi / 180 )
+    f = (w/2) / math.tan( fov / 2 * math.pi / 180 )
 
     r2 = f * math.tan( math.pi / 2 - el)
     x2 = math.floor(r2 * math.cos(theta) + w/2)
@@ -59,29 +75,33 @@ def fish():
 
     i2 = (int)(3 * (x2 + y2 * w))
 
-    evalu = ((r2 < 0) or (r2 >= (w/2)))
+    if (ortho):
+      evalu = (r > (h/2)) or (el < (math.pi - fov/180 * math.pi)/2)
+    else:
+      evalu = ((r2 < 0) or (r2 >= (w/2)))
+
+
     if (evalu):
-      bfish[i] = 0
+      output[i] = 0
       i+=1
-      bfish[i] = 0
+      output[i] = 0
       i+=1
-      bfish[i] = 0
+      output[i] = 0
       i+=1
     else:
-      bfish[i] = bcap[i2]
+      output[i] = bcap[i2]
       i+=1
       i2+=1
-      bfish[i] = bcap[i2]
+      output[i] = bcap[i2]
       i+=1
       i2+=1
-      bfish[i] = bcap[i2]
+      output[i] = bcap[i2]
       i+=1
       i2+=1
 
-  img2 = np.reshape(bfish, (600,600,3))
+  img2 = np.reshape(output, (w,h,3))
 
   name = next(tempfile._get_candidate_names())
-
   plt.imsave("static/"+name, img2)
 
   return "static/"+name+".png"

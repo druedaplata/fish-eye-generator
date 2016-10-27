@@ -18,29 +18,36 @@
 
   </head>
   <body>
-    <h3>
-      Image to Fish-Eye
-    </h3>
-    <div class="row">
-      <div class="col-md-12">
-        <div id="map">
+    <div class="container">
+      <h3 class="text-center">
+        Google Maps Api (Move the marker)
+      </h3>
+      <div class="row">
+        <div class="col-md-4 col-md-offset-4">
+          <div id="map">
 
+          </div>
         </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4 img-responsive">
+          <h4>Normal Image</h4>
+          <div id="normalImage">
+          </div>
+        </div>
+        <div class="col-md-4 img-responsive">
+          <h4>Equidistant</h4>
+          <div id="equidistantImage">
+          </div>
+        </div>
+        <div class="col-md-4 img-responsive">
+          <h4>Ortho</h4>
+          <div id="orthoImage">
+          </div>
+        </div>
+
       </div>
     </div>
-    <div class="row">
-      <div class="col-md-6">
-        <div id="normalImage">
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div id="fishImage">
-
-        </div>
-      </div>
-
-    </div>
-
 
     <script>
     var myLatLong = {lat: 51.51381379, lng: -0.07685065};
@@ -60,7 +67,6 @@
         });
 
         marker.addListener('dragend', handleDrag);
-        getFishEye(myLatLong);
 
         };
     </script>
@@ -84,7 +90,7 @@
             var key = "&key=AIzaSyC-ajGOO9QlAAlH_pOhywj0q6hdFpkI0Ks";
             var fov = "&fov=180";
             var pitch = "&pitch=90";
-            var size = "?size=600x600";
+            var size = "?size=350x350";
             var loc = "&location=" + lat + "," + long;
             var base = "https://maps.googleapis.com/maps/api/streetview";
 
@@ -109,15 +115,22 @@
             $.ajax({
               type: 'POST',
               contentType: "application/json; charset=utf-8",
-              url: "{{ url_for('fish') }}",
+              url: "{{ url_for('transform') }}",
               data: JSON.stringify(data),
               success: function(response){
-                  console.log(document.getElementById('fishImage'));
-                  document.getElementById('fishImage').innerHTML = "";
-                  console.log(document.getElementById('fishImage'));
-                  var img = document.createElement("IMG");
-                  img.src = response;
-                  document.getElementById('fishImage').appendChild(img);
+                  if (response.equidistant){
+                    document.getElementById('equidistantImage').innerHTML = "";
+                    var img = document.createElement("IMG");
+                    img.src = response.equidistant;
+                    document.getElementById('equidistantImage').appendChild(img);
+                  }
+                  if (response.ortho){
+                    document.getElementById('orthoImage').innerHTML = "";
+                    var img = document.createElement("IMG");
+                    img.src = response.ortho;
+                    document.getElementById('orthoImage').appendChild(img);
+                  }
+
 
               }
 
