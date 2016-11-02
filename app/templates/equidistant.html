@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="cache-control" content="no-cache" />
+    <style>
+       #map {
+        height: 400px;
+       }
+       #normalImage {
+        height: 400px;
+       }
+    </style>
+
+
+    <!-- Bootstrap -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+
+  </head>
+  <body>
+    <div class="container">
+      <h3 class="text-center">
+        Google Maps Api (Move the marker)
+      </h3>
+      <div class="row">
+        <div class="col-md-4 col-md-offset-4">
+          <div id="map">
+
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4 img-responsive">
+          <h4>Normal Image</h4>
+          <div id="normalImage">
+          </div>
+        </div>
+        <div class="col-md-4 img-responsive">
+          <h4>Equidistant</h4>
+          <div id="equidistantImage">
+          </div>
+        </div>
+        <div class="col-md-4 img-responsive">
+          <h4>Ortho</h4>
+          <div id="orthoImage">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <script>
+    var myLatLong = {lat: 51.51381379, lng: -0.07685065};
+    function initMap() {
+
+        var mapOptions = {
+        	zoom: 15,
+        	center: myLatLong
+        }
+        var map = new google.maps.Map(document.getElementById("map"), mapOptions)
+
+        // Draggable marker
+        var marker = new google.maps.Marker({
+        	position: myLatLong,
+        	map: map,
+        	draggable: true
+        });
+
+        marker.addListener('dragend', handleDrag);
+
+        };
+    </script>
+
+    <script>
+    function handleDrag(event){
+        var newLatLong = event.latLng;
+
+        getFishEye(newLatLong);
+
+    };
+    </script>
+
+
+    <script>
+        function getFishEye(myLatLong){
+            var lat = myLatLong.lat();
+            var long = myLatLong.lng();
+            console.log(lat);
+            console.log(long);
+            var key = "&key=AIzaSyC-ajGOO9QlAAlH_pOhywj0q6hdFpkI0Ks";
+            var fov = "&fov=180";
+            var pitch = "&pitch=90";
+            var size = "?size=350x350";
+            var loc = "&location=" + lat + "," + long;
+            var base = "https://maps.googleapis.com/maps/api/streetview";
+
+            var data = {
+              key: key,
+              fov: fov,
+              pitch: pitch,
+              size: size,
+              loc: loc,
+              base: base
+            };
+
+            // Add a normalImage
+            url = base + size + loc + pitch + fov + key
+            document.getElementById('normalImage').innerHTML = "";
+            var img = document.createElement("IMG");
+            img.src = url;
+            document.getElementById('normalImage').appendChild(img);
+
+            // Add a fishImage
+
+            $.ajax({
+              type: 'POST',
+              contentType: "application/json; charset=utf-8",
+              url: "{{ url_for('transform') }}",
+              data: JSON.stringify(data),
+              success: function(response){
+                  if (response.equidistant){
+                    document.getElementById('equidistantImage').innerHTML = "";
+                    var img = document.createElement("IMG");
+                    img.src = response.equidistant;
+                    document.getElementById('equidistantImage').appendChild(img);
+                  }
+                  if (response.ortho){
+                    document.getElementById('orthoImage').innerHTML = "";
+                    var img = document.createElement("IMG");
+                    img.src = response.ortho;
+                    document.getElementById('orthoImage').appendChild(img);
+                  }
+
+
+              }
+
+            })
+
+        };
+    </script>
+
+
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC-ajGOO9QlAAlH_pOhywj0q6hdFpkI0Ks&callback=initMap">
+    </script>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+
+  </body>
+</html>
